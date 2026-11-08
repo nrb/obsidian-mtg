@@ -56,7 +56,7 @@ export class BulkCache {
 		if (!def) return;
 		const tags = await get("oracle_tags");
 		const sources: Record<string, string> = {};
-		for (const t of BULK_TYPES) if (this.meta.updated[t]) sources[t] = this.meta.updated[t] as string;
+		for (const t of BULK_TYPES) { const u = this.meta.updated[t]; if (u) sources[t] = u; }
 		const ix = await buildIndex(gzipLines(def), tags ? gzipLines(tags) : null, sources, (n) => note?.setMessage(`Scryfall data: indexing ${n.toLocaleString()} cards…`));
 		await a.write(this.indexPath, JSON.stringify(ix));
 		this.index = ix;
@@ -117,7 +117,7 @@ export class BulkCache {
 	summary(): string {
 		if (!this.meta.downloadedAt) return "Not downloaded. The views use the data bundled with the plugin.";
 		const mb = Object.values(this.meta.sizes).reduce((x: number, y) => x + (y || 0), 0) / 1e6;
-		const upd = BULK_TYPES.map((t) => `${t.replace("_", " ")} ${this.meta.updated[t] ? new Date(this.meta.updated[t] as string).toLocaleDateString() : "missing"}`).join(", ");
+		const upd = BULK_TYPES.map((t) => `${t.replace("_", " ")} ${(this.meta.updated[t] ? new Date(this.meta.updated[t] ?? "").toLocaleDateString() : "missing")}`).join(", ");
 		return `Cached ${mb.toFixed(0)} MB (${upd}).` + (this.index ? ` ${Object.keys(this.index.cards).length.toLocaleString()} cards indexed.` : " Index not built yet.");
 	}
 

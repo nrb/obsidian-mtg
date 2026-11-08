@@ -1,7 +1,7 @@
 // Ported from the "Extended Art Finder" artifact. The parsing, picking and rewrite logic
 // is unchanged; owned counts now come from the imported ManaBox collection, and picks
 // and the last deck list are kept in the plugin's data instead of localStorage.
-/* eslint-disable */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument -- untyped JavaScript ported from the artifact; the host object it receives is typed as ViewHost in main.ts */
 import BUNDLED from "./data.json";
 import SAMPLE from "./sample.txt";
 
@@ -116,7 +116,7 @@ root.addEventListener('change',e=>{
 });
 let draftT;
 const saveDeck=v=>{st.deck=v;persist();};
-$('deck').addEventListener('input',()=>{$('srcnote').textContent='';clearTimeout(draftT);draftT=setTimeout(()=>saveDeck($('deck').value),400);render();});
+$('deck').addEventListener('input',()=>{$('srcnote').textContent='';window.clearTimeout(draftT);draftT=window.setTimeout(()=>saveDeck($('deck').value),400);render();});
 $('owned').addEventListener('change',render);
 $('clear').addEventListener('click',()=>{$('deck').value='';$('srcnote').textContent='';saveDeck(null);render();$('deck').focus();});
 $('file').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;$('deck').value=await f.text();$('srcnote').textContent=f.name;saveDeck($('deck').value);render();e.target.value='';});
@@ -129,16 +129,17 @@ $('savenote').addEventListener('click',async()=>{
   const b=$('savenote');
   try{const p=await host.saveNote('Extended art list',$('out').value);b.textContent='Saved to '+p;}
   catch(err){b.textContent='Could not save';}
-  setTimeout(()=>b.textContent='Save as note',2500);
+  window.setTimeout(()=>b.textContent='Save as note',2500);
 });
 async function copyText(b,text,label){
   try{await navigator.clipboard.writeText(text);b.textContent='Copied';}
-  catch(e){const o=$('out');o.value=text;o.select();b.textContent='Selected, press copy';setTimeout(render,4000);}
-  setTimeout(()=>b.textContent=label,1800);
+  catch(e){const o=$('out');o.value=text;o.select();b.textContent='Selected, press copy';window.setTimeout(render,4000);}
+  window.setTimeout(()=>b.textContent=label,1800);
 }
 $('copy').addEventListener('click',()=>copyText($('copy'),$('out').value,'Copy all'));
 $('copyEA').addEventListener('click',()=>copyText($('copyEA'),eaText,'Copy extended art only'));
 if(st.deck){$('deck').value=st.deck;$('srcnote').textContent='Your last list';}else $('deck').value=SAMPLE;
 render();
-return {refresh:render,destroy(){clearTimeout(draftT);}};
+return {refresh:render,destroy(){window.clearTimeout(draftT);}};
 }
+/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument -- end of the ported artifact code */

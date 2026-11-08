@@ -176,13 +176,12 @@ export default class MtgPlugin extends Plugin {
 		await this.importCsvText(await this.app.vault.read(f), f.name);
 	}
 
-	pickCsvFromDisk() {
-		const input = document.createElement("input");
-		input.type = "file";
-		input.accept = ".csv,text/csv";
-		input.addEventListener("change", async () => {
+	pickCsvFromDisk(done?: () => void) {
+		const input = createEl("input", { type: "file", attr: { accept: ".csv,text/csv" } });
+		input.addEventListener("change", () => {
 			const f = input.files && input.files[0];
-			if (f) await this.importCsvText(await f.text(), f.name);
+			if (!f) return;
+			void f.text().then((t) => this.importCsvText(t, f.name)).then(() => done && done());
 		});
 		input.click();
 	}
@@ -329,20 +328,9 @@ class MtgSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Import ManaBox CSV")
 			.setDesc("Export your collection from ManaBox as CSV and pick the file. A new import replaces the stored collection.")
-			.addButton((b) => b.setButtonText("Choose file").setCta().onClick(() => {
-				const input = document.createElement("input");
-				input.type = "file";
-				input.accept = ".csv,text/csv";
-				input.addEventListener("change", async () => {
-					const f = input.files && input.files[0];
-					if (!f) return;
-					await this.plugin.importCsvText(await f.text(), f.name);
-					redraw();
-				});
-				input.click();
-			}))
+			.addButton((b) => b.setButtonText("Choose file").setCta().onClick(() => this.plugin.pickCsvFromDisk(redraw)))
 			.addButton((b) => b.setButtonText("From vault").onClick(() => {
-				new CsvFileModal(this.app, async (f) => { await this.plugin.importVaultCsv(f); redraw(); }).open();
+				new CsvFileModal(this.app, (f) => { void this.plugin.importVaultCsv(f).then(redraw); }).open();
 			}));
 
 		new Setting(containerEl)

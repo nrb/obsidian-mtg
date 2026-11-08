@@ -1,4 +1,4 @@
-# obsidian-mtg
+# MTG Decks
 
 An Obsidian plugin for organizing Magic cards and decks. It adds two views and a
 collection import:
@@ -39,7 +39,7 @@ Requirements: Node.js 18 or newer and npm.
 
    This writes `main.js` next to `manifest.json` and `styles.css`.
 
-2. Copy into your vault. Create the folder `<your vault>/.obsidian/plugins/mtg-decks/`
+2. Copy into your vault. Create the folder `.obsidian/plugins/mtg-decks/` inside your vault
    and copy `main.js`, `manifest.json` and `styles.css` into it:
 
    ```sh
@@ -143,6 +143,16 @@ bundled with the plugin.
 ## Development
 
 - `npm run build` type-checks and builds `main.js`.
-- `npm test` runs the CSV import tests.
+- `npm test` runs the unit tests (ManaBox CSV import, Scryfall index).
+- `npm run test:acceptance` runs the browser acceptance tests with Playwright (run
+  `npx playwright install chromium` once first). They check two things:
+  - The ported views render the same output as the original artifacts (saved in
+    `test/acceptance/fixtures/artifacts/`) for the same decks and lists.
+  - The whole plugin works against a stubbed Obsidian API: first-launch prompt,
+    collection import and the Scryfall cache, using small Scryfall fixtures.
+- CI (`.github/workflows/ci.yml`) runs the build and both test suites on every pull
+  request. It also runs [obsidian-workflows](https://github.com/obsidianmd/obsidian-workflows)
+  with the community directory scanner's lint rules, which validates the manifest,
+  README, license and build.
 - Source: `src/main.ts` (plugin, settings, commands), `src/collection.ts` (ManaBox CSV),
   `src/overlap/` and `src/extended-art/` (the ported views and their markup).

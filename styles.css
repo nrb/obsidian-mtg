@@ -243,6 +243,7 @@
 .mtg-overlap .seg:last-child { border-radius: 0 4px 4px 0; }
 .mtg-overlap .seg:hover, .mtg-overlap .seg:focus-visible { filter: brightness(1.15); }
 .mtg-overlap .seg b { display: inline-block; font-weight: 500; }
+.mtg-overlap .seg b.seg-hidden { visibility: hidden; }
 .mtg-overlap .ctot { font-family: var(--font-mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
 .mtg-overlap .ctip { position: fixed; z-index: 30; pointer-events: none; background: var(--ink); color: var(--bg); padding: 6px 9px; border-radius: 4px; font-size: 12px; max-width: 260px; line-height: 1.35; }
 .mtg-overlap .ctip strong { font-family: var(--font-mono); font-size: 13px; }

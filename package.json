@@ -7,14 +7,15 @@
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "tsc --noEmit --skipLibCheck && node esbuild.config.mjs production",
-    "test": "node --experimental-strip-types --no-warnings --test test/*.test.ts"
+    "test": "node --experimental-strip-types --no-warnings --test test/*.test.ts",
+    "test:acceptance": "node --experimental-strip-types --no-warnings --test test/acceptance/*.test.mjs"
   },
   "license": "GPL-3.0-only",
   "devDependencies": {
     "@types/node": "22.10.2",
-    "builtin-modules": "3.3.0",
     "esbuild": "0.24.2",
     "obsidian": "1.7.2",
+    "playwright": "1.63.0",
     "tslib": "2.8.1",
     "typescript": "5.7.2"
   }

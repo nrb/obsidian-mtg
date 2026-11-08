@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Type-check and build
+        run: npm run build
+      - name: Unit tests
+        run: npm test
+      - name: Install Chromium for acceptance tests
+        run: npx playwright install --with-deps chromium
+      - name: Acceptance tests (views vs. artifacts, plugin flow)
+        run: npm run test:acceptance
+
+  obsidian:
+    name: Obsidian plugin validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Validates manifest.json, versions.json, README and license, builds the plugin and
+      # lints it with the community directory scanner's ESLint and Stylelint rulesets.
+      - uses: obsidianmd/obsidian-workflows@v1
+        with:
+          scanner-lint: true
+          # Policy findings are reported as warnings (see the PR notes on innerHTML).
