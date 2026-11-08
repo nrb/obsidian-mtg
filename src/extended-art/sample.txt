@@ -1,0 +1,37 @@
+1 Assassin's Trophy (MKM) 187
+1 Assassin's Trophy (ECC) 119
+4 Boggart Trawler (MH3) 243
+1 Cling to Dust (PLST) THB-87
+2 Dauthi Voidwalker (PLST) MH2-81
+1 Dauthi Voidwalker (TDC) 176
+2 Deathcap Glade (SOS) 301
+4 Fatal Push (FCA) 9
+2 Fell the Profane (MH3) 244
+2 Force of Despair (MH1) 92
+3 March of Wretched Sorrow (NEO) 380
+4 Necrodominance (MH3) 102
+2 Orcish Bowmasters (LTR) 103
+1 Orcish Bowmasters (LTR) 433
+2 Overgrown Tomb (ECL) 266
+4 Polluted Delta (MH3) 224
+2 Professor Dellian Fel (SOS) 214
+2 Sheoldred, the Apocalypse (DMU) 290
+4 Soul Spike (CSP) 70
+5 Swamp (FRA) 285
+2 Thoughtseize (IMA) 110
+2 Thoughtseize (2XM) 109
+2 Underground Mortuary (MKM) 271
+1 Verdant Catacombs (ZEN) 229
+2 Verdant Catacombs (MH2) 260
+2 Witherbloom Charm (SOS) 244
+
+// SIDEBOARD
+1 Ashiok, Dream Render (WAR) 228
+3 Break the Ice (MH2) 77
+2 Culling Ritual (SOA) 62
+1 Dauthi Voidwalker (TDC) 176
+1 Force of Despair (MH1) 92
+1 Professor Dellian Fel (SOS) 214
+2 Requiting Hex (ECL) 116
+2 Sheoldred's Edict (SOA) 32
+2 Surgical Extraction (NPH) 74

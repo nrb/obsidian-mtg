@@ -1,0 +1,323 @@
+<div class="wrap">
+  <header>
+    <h1>Deck Overlap Matrix</h1>
+    <p class="sub" id="sub"></p>
+  </header>
+
+  <section class="controls" aria-label="Decks in the comparison">
+    <div class="row pickrow"><label class="lbl" for="pickbox">Compare</label><select id="pickbox" multiple aria-describedby="pickhelp"></select></div>
+    <p class="note" id="pickhelp">Hold Ctrl (Cmd on a Mac) or Shift to pick several decks. On a phone, tap each deck.</p>
+    <div class="row" id="pickchips" aria-label="Decks in the comparison"></div>
+    <div class="row"><button type="button" id="pickall">Select all</button><button type="button" id="picknone">Clear</button><span class="status" id="pickstatus" aria-live="polite"></span></div>
+  </section>
+
+  <section class="controls mgr" id="mgr" aria-label="Edit and load decklists">
+    <div class="row"><button type="button" id="mgrtoggle" aria-expanded="false" aria-controls="mgrbody">Edit decklists</button><button type="button" id="lpaste">Paste a decklist</button><span class="status" id="mgrmsg" aria-live="polite"></span></div>
+    <div id="mgrbody" hidden>
+      <h3>Edit a deck</h3>
+      <div class="row"><label class="lbl" for="msel">Deck</label><select id="msel"></select>
+        <button type="button" id="mnew">New deck</button><button type="button" id="mdup">Duplicate</button><button type="button" id="mdel">Delete</button></div>
+      <div class="mgrid">
+        <label>Name<input id="mn" type="text" maxlength="80" autocomplete="off"></label>
+        <label>Strategy<input id="ms" type="text" maxlength="80" autocomplete="off"></label>
+        <label>Type<input id="mb" type="text" maxlength="40" list="mbl" autocomplete="off"></label>
+        <label>Marker color<input id="mcol" type="color"></label>
+        <label>Color name<input id="mcn" type="text" maxlength="24" placeholder="e.g. Gold" autocomplete="off"></label>
+        <datalist id="mbl"><option value="Aggro"><option value="Midrange"><option value="Combo"><option value="Control"><option value="Other"></datalist>
+      </div>
+      <label class="mfull">Decklist (one card per line as “4 Card Name”; a line reading Sideboard starts the sideboard)
+        <textarea id="mt" rows="14" spellcheck="false" autocomplete="off"></textarea></label>
+      <div class="row"><label class="chk"><input type="checkbox" id="mtkon"> Tokens are listed for this deck</label></div>
+      <label class="mfull">Tokens (one per line)<textarea id="mtk" rows="3" spellcheck="false" autocomplete="off"></textarea></label>
+      <p class="note" id="mcheck" aria-live="polite"></p>
+      <div class="row"><button type="button" id="msave">Save deck</button><button type="button" id="mrevert">Revert form</button></div>
+
+      <h3>Load decklists</h3>
+      <div class="row"><label class="lbl" for="lname">Name</label><input id="lname" type="text" maxlength="80" placeholder="New deck name" autocomplete="off"></div>
+      <label class="mfull">Paste a decklist (ManaBox, Moxfield, Archidekt or plain text; a Tokens section is read as tokens, a Maybeboard is ignored)
+        <textarea id="lt" rows="6" spellcheck="false" autocomplete="off"></textarea></label>
+      <div class="row"><button type="button" id="ladd">Add as new deck</button><button type="button" id="lnote">Add from current note</button>
+        <label class="filebtn">Load .txt files<input id="lfile" type="file" accept=".txt,.dec,.dek,text/plain" multiple></label></div>
+
+      <h3>Card info</h3>
+      <p class="note" id="infsum"></p>
+      <div class="row"><label class="lbl" for="inf">Find a card</label><input id="inf" type="search" placeholder="Type part of a card name" autocomplete="off"></div>
+      <div class="tablewrap"><table><thead><tr><th scope="col" class="l">Card</th><th scope="col" class="l">Colors</th><th scope="col" class="l">Double pip</th><th scope="col" class="l">Counters</th></tr></thead><tbody id="infbody"></tbody></table></div>
+      <p class="note">Colors: letters from W U B R G for the card’s color identity as it counts for fetch-land needs and the color charts (one letter is mono, two or more is multicolor), C for colorless, L for a land. Double pip: the color a card needs twice, such as U for {U}{U}. Counters: comma-separated types the card uses, such as +1/+1 or Loyalty. Cards with no info yet count as colorless until you set them.</p>
+
+      <h3>Backup and transfer</h3>
+      <div class="row"><button type="button" id="mexp">Export JSON</button><button type="button" id="mcopy">Copy JSON</button><button type="button" id="mreset">Reset to built-in decks</button></div>
+      <div class="row"><label class="lbl" for="imode">Import</label>
+        <select id="imode"><option value="replace">Replace everything</option><option value="merge">Merge (same-named decks are updated)</option></select>
+        <label class="filebtn">Choose JSON file<input id="ifile" type="file" accept=".json,application/json"></label></div>
+      <label class="mfull">Or paste exported JSON here
+        <textarea id="ij" rows="4" spellcheck="false" autocomplete="off"></textarea></label>
+      <div class="row"><button type="button" id="ipaste">Import pasted JSON</button></div>
+      <p class="note">Your decks and edits are saved with the plugin in this vault. Export JSON writes a file into the vault, which you can import on another device.</p>
+    </div>
+  </section>
+
+  <div id="app">
+  <div class="row" id="tabs" role="tablist" aria-label="View"></div>
+  <div id="tab-main" role="tabpanel">
+  <section class="decks" id="tiles" aria-label="Decks"></section>
+
+  <section class="pool" aria-label="Best sets of decks">
+    <h2>Best sets of decks</h2>
+    <div class="row" id="poolsize" role="group" aria-label="Decks per set"><span class="lbl">Decks per set</span></div>
+    <div class="row" id="atonce" role="group" aria-label="Decks built at once"><span class="lbl">Built at once</span></div>
+    <div class="row"><label class="lbl" for="budget">Extra cards</label><input id="budget" type="number" min="0" max="500" step="1" value="0" inputmode="numeric"><span class="status">cards you would buy beyond the pool</span></div>
+    <div class="row" id="poolmodes" role="group" aria-label="Rank by"><span class="lbl">Rank by</span></div>
+    <div class="tablewrap">
+      <table id="pooltable">
+        <thead><tr>
+          <th scope="col">#</th>
+          <th scope="col" class="l">Decks</th>
+          <th scope="col">Strategies</th>
+          <th scope="col">Broad types</th>
+          <th scope="col">Cards, no basics</th>
+          <th scope="col">Total with basics</th>
+          <th scope="col" id="thn1" hidden></th>
+          <th scope="col" id="thn2" hidden></th>
+          <th scope="col">Unique names</th>
+          <th scope="col">Shared copies</th>
+          <th scope="col">Decks at once</th>
+          <th scope="col">Extra to build all</th>
+          <th scope="col" class="l">Basic lands needed</th>
+        </tr></thead>
+        <tbody id="poolbody"></tbody>
+      </table>
+    </div>
+    <button type="button" id="poolmore" class="poolbtn">Show all combinations</button>
+    <p class="note">Physical cards use the highest copy count of each card across the decks in the set, since a card can move between decks. Main deck and sideboard are combined. Basic lands are left out of the totals and listed separately, because a deck can run more than four. Strategies counts distinct playstyles (Grixis and Esper are both Reanimator). Broad types counts Aggro, Midrange and Combo. Best balance keeps only the sets that no other set beats on variety and card count together. Shared copies counts the copies you can reuse between the decks (total copies minus physical cards needed), with its share of all copies in brackets. Least overlap puts the sets that share the fewest copies first. Total with basics adds the basic lands, counting each basic at the most any one deck plays, since only one deck is built at a time. Smallest total ranks by that figure. Decks at once is the most decks from the set that you could build together from the pool plus the extra cards you enter above, so it starts at 1 when the extra cards are 0. Extra to build all is how many cards you would add to build every deck in the set at the same time. Built at once picks how many decks of the set you want to have built at the same time (1 by default, which is the plain total above). For 2 or more, two more columns give the physical cards needed to build any that many decks together: each card is counted at the sum of its highest copy counts across that many decks, and Smallest pool and Smallest total then rank by those figures. Ties break on fewer unique names.</p>
+  </section>
+
+  <section class="colors" aria-label="Color distribution">
+    <h2>Color distribution</h2>
+    <div class="controls">
+      <div class="row" id="cview" role="group" aria-label="View"><span class="lbl">View</span></div>
+      <div class="row" id="cscope" role="group" aria-label="Which cards"><span class="lbl">Cards</span></div>
+      <div class="row" id="cscale" role="group" aria-label="Bar scale"><span class="lbl">Scale</span></div>
+    </div>
+    <div class="clegend" id="clegend" aria-label="Color key"></div>
+    <h3>By deck</h3>
+    <div class="cchart" id="chartdecks"></div>
+    <h3>By set of decks</h3>
+    <div class="cchart" id="chartpools"></div>
+    <p class="note">Bars show nonland cards, and each card counts once in its own color. A card with two or more colors counts as Multicolor, and hybrid mana counts as both colors. Double-faced cards use their front face. Dryad Arbor counts as green. The pool rows follow the ranking above and use the highest copy count per card, with basic lands left out. In the pool table, lands means nonbasic lands.</p>
+  </section>
+
+  <section class="controls" aria-label="Filters">
+    <div class="row">
+      <label class="lbl" for="q">Search</label>
+      <input id="q" type="search" placeholder="Card name" autocomplete="off">
+    </div>
+    <div class="row" id="cats" role="group" aria-label="Overlap category">
+      <span class="lbl">Show</span>
+    </div>
+    <div class="row" id="decksel" role="group" aria-label="Must be in these decks">
+      <span class="lbl">In deck</span>
+    </div>
+    <div class="row">
+      <span class="lbl">Counts</span>
+      <button id="split" type="button" aria-pressed="false">Split main / sideboard</button>
+      <span class="spacer"></span>
+      <span class="status" id="status" aria-live="polite"></span>
+      <button id="copy" type="button">Copy as TSV</button>
+    </div>
+  </section>
+
+  <div class="tablewrap">
+    <table id="mat">
+      <thead id="mainhead"><tr id="headrow"></tr></thead>
+      <tbody id="body"></tbody>
+      <tfoot id="foot"></tfoot>
+    </table>
+  </div>
+
+  <div class="legend" aria-label="Copies legend">
+    <span>Copies</span>
+    <i style="--i:1">1</i><i style="--i:2">2</i><i style="--i:3">3</i><i style="--i:4">4</i>
+    <span>Cell shade follows the copy count in that deck.</span>
+  </div>
+  <p class="note">Decks column is the number of decks that run the card. "In exactly one sideboard" lists cards with sideboard copies in a single deck, even if another deck plays them in its main. Card names ignore set and collector number.</p>
+
+  <section class="tokens" aria-label="Sideboard-only cards">
+    <h2>Sideboard-only cards</h2>
+    <p class="note" id="sbsum"></p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col" class="l">Card</th><th scope="col">Sideboards</th><th scope="col">Total copies</th><th scope="col">Most in one</th><th scope="col" class="l">Decks</th></tr></thead>
+        <tbody id="sbbody"></tbody>
+      </table>
+    </div>
+    <p class="note">Cards that no selected deck plays in its main deck, only in sideboards. Sideboards is how many of the selected decks have the card in their sideboard. Most in one is the copies you need to own to cover any single deck.</p>
+  </section>
+
+  <section class="tokens" aria-label="Tokens needed">
+    <h2>Tokens needed</h2>
+    <div class="tablewrap">
+      <table>
+        <thead id="toksectionhead"><tr id="tokhead"></tr></thead>
+        <tbody id="tokbody"></tbody>
+      </table>
+    </div>
+    <p class="note">Esper Archon, Rakdos and Golgari Necro lists come from the deck files or your notes: the Esper file has no token section and Rakdos needs no tokens. Golgari Necro, Shiptrader and Zombardment tokens were supplied by you directly. Shiptrader uses every Darklight Soultrader token plus the ones listed for it.</p>
+  </section>
+
+  <section class="tokens" aria-label="Counters used">
+    <h2>Counter types</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr id="cnthead"></tr></thead>
+        <tbody id="cntbody"></tbody>
+      </table>
+    </div>
+    <p class="note">A counter type is listed when a card in the deck (main or sideboard) places it, uses it (loyalty on planeswalkers), or has it as part of its own text, per each card's oracle text. Keyword actions that make counters count (amass, fabricate, undying, adapt). Cards with no counters are omitted. Hover a mark for the card names.</p>
+  </section>
+
+  <section class="checklist" aria-label="Trial cards">
+    <h2>Trial cards</h2>
+    <p class="note">Cards in your pool that no deck runs yet, for trying out and tuning. One per line as “2 Card Name”. Saved with the plugin and included in the JSON export.</p>
+    <textarea id="trtext" rows="5" spellcheck="false" autocomplete="off" aria-label="Trial cards" placeholder="2 Card Name"></textarea>
+    <div class="row"><button type="button" id="trsave">Save trial cards</button><span class="status" id="trstatus" aria-live="polite"></span></div>
+    <div class="tablewrap">
+      <table class="sbx">
+        <thead><tr><th scope="col" class="l">Card</th><th scope="col">Copies</th><th scope="col" class="l">Also in a deck</th></tr></thead>
+        <tbody id="trbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="checklist" aria-label="Card checklist">
+    <h2>Card checklist</h2>
+    <div class="row" id="clfmt" role="group" aria-label="Checklist format"><span class="lbl">Format</span><button type="button" data-fmt="md">Checklist with decks</button><button type="button" data-fmt="plain">Cards only</button></div>
+    <div class="row"><button type="button" id="clcopy">Copy</button><button type="button" id="clnote">Save as note</button><span class="status" id="clstatus" aria-live="polite"></span></div>
+    <textarea id="cltext" readonly aria-label="Markdown checklist" spellcheck="false"></textarea>
+    <p class="note">Built from the decks selected above, with main deck and sideboard combined. The sections add up to the physical cards you need, counting each card at the most copies any one deck plays and each basic land the same way. Common to all decks is the fewest copies every deck plays. Shared by some decks is the next layer, with the decks that use those copies in brackets. Each deck section is what only that deck needs on top. Build any one deck from the common section, the shared copies it uses, and its own section. Trial cards are listed in their own section and added on top of the deck totals. Cards only gives the same totals as one "count name" line per card, sorted by name, with no deck names, marks or tokens.</p>
+  </section>
+  </div>
+
+  <div id="tab-find" role="tabpanel" hidden>
+  <section class="finder" aria-label="Card finder">
+    <h2>Card finder</h2>
+    <div class="row">
+      <label class="lbl" for="fq">Card</label>
+      <input id="fq" type="search" placeholder="Type part of a card name" autocomplete="off">
+      <button type="button" id="fclear">Clear all</button>
+    </div>
+    <div class="row" id="fsug" aria-label="Matching cards"></div>
+    <div class="row" id="fsel" aria-label="Selected cards"></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col">Card</th><th scope="col" class="l">Decks that include it</th><th scope="col">Decks</th></tr></thead>
+        <tbody id="fbody"></tbody>
+      </table>
+    </div>
+    <p class="note" id="fsummary"></p>
+  </section>
+  </div>
+
+  <div id="tab-mark" role="tabpanel" hidden>
+  <section class="finder" aria-label="Sleeve marks">
+    <h2>Sleeve marks</h2>
+    <div class="row" id="mlegend" aria-label="Marker colors in marking order"></div>
+    <div class="row" id="msorts"><span class="lbl">Sort</span>
+      <button type="button" data-msort="group">Group by marks</button><button type="button" data-msort="name">By card name</button>
+      <label class="chk"><input type="checkbox" id="mbas"> Include basic lands</label></div>
+    <p class="note" id="msum"></p>
+    <div class="tablewrap">
+      <table class="marks">
+        <thead><tr><th scope="col" class="l">Card</th><th scope="col" class="l">Marks (in order)</th><th scope="col">Copies</th></tr></thead>
+        <tbody id="mbody"></tbody>
+      </table>
+    </div>
+    <h3 class="msub">Tokens</h3>
+    <p class="note" id="mtsum"></p>
+    <div class="tablewrap">
+      <table class="marks">
+        <thead><tr><th scope="col" class="l">Token</th><th scope="col" class="l">Marks (in order)</th></tr></thead>
+        <tbody id="mtbody"></tbody>
+      </table>
+    </div>
+    <p class="note">Each card gets one mark per selected deck that plays it, main deck or sideboard. Each token gets one mark per selected deck whose token list includes it; token lists have no copy counts. Marks always run in the same order, by hue from red through violet and pink, then neutrals from light to dark, whichever decks are selected. Copies is the most any one selected deck plays, the number of sleeves to mark. Set each deck's color and name under Edit decklists.</p>
+  </section>
+  </div>
+
+  <div id="tab-pkg" role="tabpanel" hidden>
+  <section class="finder" aria-label="Packages">
+    <h2>Packages</h2>
+    <div class="row"><span class="lbl">Cards</span>
+      <label class="chk"><input type="checkbox" id="pkall"> Include packages in every selected deck</label></div>
+    <p class="note" id="pksum"></p>
+    <div class="tablewrap">
+      <table class="pk">
+        <thead><tr><th scope="col" class="l">Package</th><th scope="col" class="l">Decks</th><th scope="col">Cards</th><th scope="col">Copies</th></tr></thead>
+        <tbody id="pkbody"></tbody>
+      </table>
+    </div>
+    <p class="note">A package is a set of cards that are always in the same decks: every selected deck that plays one card of the package (main deck or sideboard) plays all of them, and no other card is in exactly those decks. That keeps each package as small as the lists allow; a card that also shows up in one more deck lands in a different package. Only packages of at least two different cards in two or more selected decks are listed, and basic lands are left out. Copies after a card are per deck, in the order of the Decks column; SB marks sideboard copies. The Copies column is the most copies of the package any one deck plays.</p>
+  </section>
+  </div>
+
+  <div id="tab-sub" role="tabpanel" hidden>
+  <section class="finder" aria-label="Substitutes">
+    <h2>Substitutes</h2>
+    <p class="note" id="sbxsum"></p>
+    <div class="tablewrap">
+      <table class="sbx">
+        <thead><tr><th scope="col" class="l">Deck</th><th scope="col" class="l">Colors beyond black and green</th><th scope="col" class="l">Cards that need them</th></tr></thead>
+        <tbody id="sbxdecks"></tbody>
+      </table>
+    </div>
+    <h3 class="msub">Interchangeable cards</h3>
+    <p class="note" id="fgsum"></p>
+    <div class="tablewrap">
+      <table class="sbx">
+        <thead><tr><th scope="col" class="l">Function</th><th scope="col" class="l">Cards in the selected decks</th><th scope="col">Pool now</th><th scope="col">Standardized</th><th scope="col" class="l">Standardize on</th></tr></thead>
+        <tbody id="fgbody"></tbody>
+      </table>
+    </div>
+    <p class="note">Each row is a family of Scryfall oracle tags you picked as doing the same job. Copies after a card are per deck (main deck plus sideboard). Pool now counts each card at the most copies any one deck plays. Standardized is the pool if every deck used the same card for that job (self-mill may use two cards, ideally at 1 and 2 mana; Overlord of the Balemurk counts as 2 for its impending cost), at the most copies of the job any one deck plays; above 4 per card you would still need another card. Standardize on is the black/green-castable card your selected decks already play the most (for self-mill, the most-played at mana value 1 and at 2). Cards tagged mana-value-matters, such as Culling Ritual, only hit cheap or specific mana values, so they get their own row instead of counting as a replacement for unrestricted removal like Assassin's Trophy. Lessons are left out because they travel with the Eyetwitch package, except Origin of Metalbending, which costs the same as other artifact and enchantment removal.</p>
+    <h3 class="msub">Off-color cards</h3>
+    <div class="row"><label class="lbl" for="sbxq">Card</label><input id="sbxq" type="search" placeholder="Filter by card name" autocomplete="off"></div>
+    <div class="tablewrap">
+      <table class="sbx">
+        <thead><tr><th scope="col" class="l">Card</th><th scope="col">Needs</th><th scope="col" class="l">Decks</th><th scope="col" class="l">Suggested black/green substitutes</th><th scope="col" class="l">Your suggestions</th></tr></thead>
+        <tbody id="sbxbody"></tbody>
+      </table>
+    </div>
+    <p class="note">A card is listed when casting it needs white, blue or red mana that black or green cannot pay (hybrid costs with a black or green half, such as Fulminator Mage, count as black or green), or when it is a land that makes white, blue or red. Colors a deck keeps on purpose are not counted: Zombardment keeps red for Goblin Bombardment. Suggested substitutes are Modern-legal cards castable with black, green or colorless mana that share the card's Scryfall oracle tags (from Scryfall's Oracle Tags data, art tags not used; cosmetic tags such as cycles or punny names are skipped; shown in grey), ranked by how specific the shared tags are, with cards already in your decks (★) first. They are a starting point from tag overlap, not tested swaps, and were looked up on 6 Nov 2026. For off-color lands the substitute is a Swamp or a black/green land once the deck no longer needs that color. Your suggestions are saved with the plugin and included in the JSON export.</p>
+  </section>
+  </div>
+
+  <div id="tab-opt" role="tabpanel" hidden>
+  <section class="finder" aria-label="Fetch land optimizer">
+    <h2>Fetch land optimizer</h2>
+    <div class="row">
+      <label class="lbl" for="othr">Needs a color at</label>
+      <input id="othr" type="number" min="1" max="60" step="1" inputmode="numeric">
+      <span class="status">% of nonland main-deck cards (multicolor cards count in each color), or any card needing two of that color</span>
+    </div>
+    <div class="row">
+      <span class="lbl">Apply</span>
+      <button type="button" id="oapply" aria-pressed="false">Use optimized fetch lands in every table</button>
+    </div>
+    <p class="note" id="osummary"></p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col" class="l">Deck</th><th scope="col" class="l">Color shares</th><th scope="col" class="l">Needs besides black</th><th scope="col" class="l">Fetch lands now</th><th scope="col" class="l">Fetch lands optimized</th></tr></thead>
+        <tbody id="obody"></tbody>
+      </table>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col" class="l">Fetch land</th><th scope="col">Also finds</th><th scope="col">Copies in pool now</th><th scope="col">Copies in pool optimized</th></tr></thead>
+        <tbody id="opool"></tbody>
+      </table>
+    </div>
+    <p class="note">Only fetch lands that can find a Swamp are swapped (Polluted Delta, Bloodstained Mire, Verdant Catacombs, Marsh Flats), since every deck here is black. Each deck keeps its number of fetch lands in the main deck and its limit of four copies per name, sideboard copies included. A deck keeps at least as many fetch lands for a color it needs as it plays now, so a deck that needs blue keeps its Polluted Deltas. Fetch lands for colors a deck does not need can be swapped for any Swamp fetch the pool already has. The pool then holds only as many fetch lands as the most demanding deck needs. This works on one deck built at a time and leaves every other card alone.</p>
+  </section>
+  </div>
+  </div>
+</div>

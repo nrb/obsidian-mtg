@@ -1,0 +1,9 @@
+{
+  "id": "mtg-decks",
+  "name": "MTG Decks",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "Deck overlap statistics, an extended art finder and ManaBox collection import for Magic: The Gathering.",
+  "author": "nrb",
+  "isDesktopOnly": false
+}

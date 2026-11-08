@@ -1,0 +1,39 @@
+<div class="wrap">
+  <header>
+    <h1>Extended <span>Art</span> Finder</h1>
+    <p>Paste a deck list. Every card with an extended art printing gets rewritten to that set and collector number. When a card has more than one, pick which one to use.</p>
+  </header>
+  <div class="grid">
+    <div class="col">
+      <section class="panel">
+        <h2>Deck list <span class="note" id="srcnote">Example: Golgari Necro</span></h2>
+        <textarea id="deck" spellcheck="false" aria-label="Deck list"></textarea>
+        <div class="row">
+          <label class="filebtn">Load .txt<input type="file" id="file" accept=".txt,text/plain"></label>
+          <button id="fromnote">Load current note</button>
+          <button id="clear">Clear</button>
+          <label class="chk"><input type="checkbox" id="owned"> Only printings I own</label>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>Rewritten list <span class="row"><button id="copyEA">Copy extended art only</button><button class="primary" id="copy">Copy all</button><button id="savenote">Save as note</button></span></h2>
+        <div id="warn" class="banner" hidden></div>
+        <textarea id="out" readonly spellcheck="false" aria-label="Rewritten list"></textarea>
+        <p class="note">Cards without an extended art printing, and cards you haven't picked yet, keep the printing from your list.</p>
+      </section>
+    </div>
+    <div class="col">
+      <section class="panel">
+        <h2>Results</h2>
+        <div class="summary" id="summary"></div>
+      </section>
+      <section class="panel" id="needP"><h2>Pick a printing</h2><div id="need"></div></section>
+      <section class="panel" id="autoP"><h2>Swapped automatically</h2><div id="auto"></div></section>
+      <section class="panel" id="noneP">
+        <details><summary id="noneSum"></summary><ul class="plain" id="none"></ul></details>
+      </section>
+    </div>
+  </div>
+  <p class="note">Extended art printings from Scryfall (frame effect "extendedart"), refreshed Nov 7, 2026. Owned counts come from the ManaBox collection you imported in the plugin settings. <span id="collnote"></span></p>
+</div>
+
