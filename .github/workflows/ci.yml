@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@v7
       # Validates manifest.json, versions.json, README and license, builds the plugin and
       # lints it with the community directory scanner's ESLint and Stylelint rulesets.
-      - uses: obsidianmd/obsidian-workflows@v1
+      - uses: obsidianmd/obsidian-workflows@8167caed39664214d82c86fdfa32e06d8d55f61d # v1.2.3
         with:
           scanner-lint: true
           # Policy findings are reported as warnings (see the PR notes on innerHTML).
