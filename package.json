@@ -1,6 +1,6 @@
 {
   "name": "obsidian-mtg",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Magic: The Gathering deck and collection tools for Obsidian: deck overlap statistics, extended art finder and ManaBox collection import.",
   "main": "main.js",
   "private": true,

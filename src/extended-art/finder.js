@@ -2,13 +2,17 @@
 // is unchanged; owned counts now come from the imported ManaBox collection, and picks
 // and the last deck list are kept in the plugin's data instead of localStorage.
 /* eslint-disable */
-import DATA from "./data.json";
+import BUNDLED from "./data.json";
 import SAMPLE from "./sample.txt";
 
-export const EXTENDED_ART = DATA;
+export const EXTENDED_ART = BUNDLED;
 
 export function mountExtendedArt(root, host) {
 const $=id=>root.querySelector('[id="'+id+'"]');
+// Printings from the cached Scryfall bulk data when downloaded, else the bundled snapshot.
+const cached=host.extendedArtData?host.extendedArtData():null;
+const DATA=cached||BUNDLED;
+if(cached)$('eadate').textContent='your cached Scryfall data from '+cached.refreshed;
 const idx=new Map();
 for(const n of Object.keys(DATA.cards)){idx.set(n.toLowerCase(),n);const f=n.split(' // ')[0].toLowerCase();if(!idx.has(f))idx.set(f,n);}
 const st=host.load()||{};

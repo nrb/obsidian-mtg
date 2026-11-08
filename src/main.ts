@@ -22,6 +22,7 @@ import {
 	parseManaBoxCsv,
 	summarize,
 } from "./collection";
+import { BulkCache, BulkMeta, BulkPromptModal, EMPTY_META } from "./bulk";
 
 export const VIEW_OVERLAP = "mtg-deck-overlap";
 export const VIEW_EXTENDED_ART = "mtg-extended-art";
@@ -29,11 +30,14 @@ export const VIEW_EXTENDED_ART = "mtg-extended-art";
 interface MtgSettings {
 	outputFolder: string;
 	skipWishlists: boolean;
+	/** Set once the first-launch Scryfall download prompt has been shown. */
+	bulkPrompted: boolean;
 }
 
 const DEFAULT_SETTINGS: MtgSettings = {
 	outputFolder: "MTG",
 	skipWishlists: true,
+	bulkPrompted: false,
 };
 
 interface MtgData {
@@ -41,6 +45,7 @@ interface MtgData {
 	collection: StoredCollection | null;
 	overlap: unknown;
 	extendedArt: unknown;
+	bulk: BulkMeta;
 }
 
 interface Mounted { refresh(): void; destroy(): void }
@@ -54,10 +59,14 @@ interface ViewHost {
 	readActiveNote(): Promise<{ name: string; text: string } | null>;
 	owned(set: string, cn: string): number;
 	collectionNote(): string;
+	extendedArtData(): unknown;
+	cardInfo(name: string): unknown;
+	offColor(name: string, pool: Record<string, unknown>): unknown;
 }
 
 export default class MtgPlugin extends Plugin {
 	data!: MtgData;
+	bulk!: BulkCache;
 	private owned = new Map<string, number>();
 	private lastMarkdown: TFile | null = null;
 	private saveSoon = debounce(() => { void this.saveData(this.data); }, 500, true);
@@ -69,8 +78,25 @@ export default class MtgPlugin extends Plugin {
 			collection: raw.collection || null,
 			overlap: raw.overlap ?? null,
 			extendedArt: raw.extendedArt ?? null,
+			bulk: raw.bulk || { ...EMPTY_META, updated: {}, sizes: {} },
 		};
 		this.rebuildOwned();
+
+		this.bulk = new BulkCache(
+			this.app,
+			normalizePath(`${this.manifest.dir || `${this.app.vault.configDir}/plugins/${this.manifest.id}`}/cache`),
+			this.data.bulk,
+			async (m) => { this.data.bulk = m; await this.saveData(this.data); },
+			() => { this.refreshViews(VIEW_OVERLAP); this.refreshViews(VIEW_EXTENDED_ART, true); },
+		);
+		this.app.workspace.onLayoutReady(async () => {
+			await this.bulk.load();
+			if (!this.data.settings.bulkPrompted && !(await this.bulk.hasCache())) {
+				this.data.settings.bulkPrompted = true;
+				await this.saveData(this.data);
+				new BulkPromptModal(this.app, () => void this.bulk.download()).open();
+			}
+		});
 
 		this.registerView(VIEW_OVERLAP, (leaf) => new OverlapView(leaf, this));
 		this.registerView(VIEW_EXTENDED_ART, (leaf) => new ExtendedArtView(leaf, this));
@@ -80,6 +106,7 @@ export default class MtgPlugin extends Plugin {
 
 		this.addCommand({ id: "open-deck-overlap", name: "Open deck overlap", callback: () => this.activate(VIEW_OVERLAP) });
 		this.addCommand({ id: "open-extended-art-finder", name: "Open extended art finder", callback: () => this.activate(VIEW_EXTENDED_ART) });
+		this.addCommand({ id: "download-scryfall-data", name: "Download or update Scryfall card data", callback: () => void this.bulk.download() });
 		this.addCommand({ id: "import-manabox-csv", name: "Import ManaBox collection CSV from disk", callback: () => this.pickCsvFromDisk() });
 		this.addCommand({
 			id: "import-manabox-csv-vault",
@@ -167,10 +194,10 @@ export default class MtgPlugin extends Plugin {
 		this.refreshViews(VIEW_EXTENDED_ART);
 	}
 
-	refreshViews(type: string) {
+	refreshViews(type: string, remount = false) {
 		for (const leaf of this.app.workspace.getLeavesOfType(type)) {
 			const v = leaf.view;
-			if (v instanceof MountedView) v.refresh();
+			if (v instanceof MountedView) { if (remount) void v.onOpen(); else v.refresh(); }
 		}
 	}
 
@@ -217,6 +244,9 @@ export default class MtgPlugin extends Plugin {
 			readActiveNote: () => this.readNote(),
 			owned: (set, cn) => (collection ? this.ownedCount(set, cn) : 0),
 			collectionNote: () => this.collectionSummary(),
+			extendedArtData: () => this.bulk.extendedArtData(),
+			cardInfo: (n) => this.bulk.cardInfo(n),
+			offColor: (n, pool) => this.bulk.offColor(n, pool),
 		};
 	}
 }
@@ -235,6 +265,7 @@ abstract class MountedView extends ItemView {
 	protected abstract rootClass: string;
 
 	async onOpen() {
+		if (this.mounted) this.mounted.destroy();
 		const el = this.contentEl;
 		el.empty();
 		el.addClass("mtg-view");
@@ -330,6 +361,22 @@ class MtgSettingTab extends PluginSettingTab {
 			.setDesc("Remove the stored collection from this vault.")
 			.addButton((b) => b.setButtonText("Clear").setWarning().setDisabled(!this.plugin.data.collection).onClick(async () => {
 				await this.plugin.clearCollection();
+				redraw();
+			}));
+
+		new Setting(containerEl).setName("Scryfall card data").setHeading();
+		const bulkDesc = containerEl.createEl("p", { text: this.plugin.bulk.summary(), cls: "setting-item-description" });
+		new Setting(containerEl)
+			.setName("Download for offline use")
+			.setDesc("Downloads Scryfall's Default Cards and Oracle Tags bulk files (about 87 MB) into the plugin folder. Updating only fetches files Scryfall has changed.")
+			.addButton((b) => b.setButtonText(this.plugin.data.bulk.downloadedAt ? "Update" : "Download").setCta().onClick(async () => {
+				b.setDisabled(true);
+				await this.plugin.bulk.download();
+				redraw();
+			}))
+			.addButton((b) => b.setButtonText("Delete cache").setWarning().setDisabled(!this.plugin.data.bulk.downloadedAt).onClick(async () => {
+				await this.plugin.bulk.clear();
+				bulkDesc.setText(this.plugin.bulk.summary());
 				redraw();
 			}));
 

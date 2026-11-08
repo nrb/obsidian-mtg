@@ -551,9 +551,12 @@ export function mountOverlap(root, host) {
   (function () {
     var CN = { W: "white", U: "blue", R: "red" };
     var inPool = {}; ALLDATA.forEach(function (r) { inPool[r[0]] = 1; });
+    // Built-in entries first; cards they do not cover come from the cached Scryfall data, if downloaded.
+    var offMemo = {};
+    var offOf = function (n) { if (OFFCOLOR[n]) return OFFCOLOR[n]; if (!(n in offMemo)) offMemo[n] = host.offColor ? host.offColor(n, inPool) : null; return offMemo[n]; };
     var perDeck = DECKS.map(function () { return { cols: {}, cards: [] }; }), list = [];
     rows.forEach(function (r) {
-      var o = OFFCOLOR[r.name]; if (!o || NOSUB[r.name]) return;
+      var o = offOf(r.name); if (!o || NOSUB[r.name]) return;
       var ds = [];
       r.tot.forEach(function (t, i) {
         if (!t) return;
@@ -579,7 +582,7 @@ export function mountOverlap(root, host) {
       var now = 0, per = DECKS.map(function () { return 0; });
       cs.forEach(function (r) { now += Math.max.apply(null, r.tot); r.tot.forEach(function (t, i) { per[i] += t; }); });
       var one = Math.max.apply(null, per), k = g.k || 1;
-      var ranked = cs.filter(function (r) { return !OFFCOLOR[r.name]; }).sort(function (a, b) {
+      var ranked = cs.filter(function (r) { return !offOf(r.name); }).sort(function (a, b) {
         var sa = a.tot.reduce(function (x, y) { return x + y; }, 0), sb2 = b.tot.reduce(function (x, y) { return x + y; }, 0);
         return b.decks - a.decks || sb2 - sa || a.name.localeCompare(b.name); });
       var picks = [], alt = g.alt || {}, cost = function (n) { return alt[n] ? alt[n][0] : g.mv[n]; };
@@ -591,7 +594,7 @@ export function mountOverlap(root, host) {
       fgSaved += Math.max(0, now - Math.max(one, 0));
       var list = cs.map(function (r) {
         var dl = []; r.tot.forEach(function (t, i) { if (t) dl.push('<span class="dk" style="--dc:var(' + DECKS[i].v + ')"><i></i>' + esc(DECKS[i].n) + " ×" + t + "</span>"); });
-        return '<div class="fgc"><b>' + esc(r.name) + "</b>" + (OFFCOLOR[r.name] ? ' <span class="status">needs ' + esc(OFFCOLOR[r.name].c) + "</span>" : "") + "<br>" + dl.join("") + "</div>";
+        return '<div class="fgc"><b>' + esc(r.name) + "</b>" + (offOf(r.name) ? ' <span class="status">needs ' + esc(offOf(r.name).c) + "</span>" : "") + "<br>" + dl.join("") + "</div>";
       }).join("");
       return '<tr><td class="l">' + esc(g.n) + '<div class="status">' + esc(g.t.join(", ")) + (g.x.length ? "; not counted: " + esc(g.x.join(", ")) : "") + '</div></td><td class="l fdecks">' + list +
         '</td><td class="big">' + now + '</td><td class="big">' + one + (one > 4 * k ? ' <span class="status">(over ' + 4 * k + ")</span>" : "") + (k > 1 ? ' <span class="status">with ' + k + " cards</span>" : "") +
@@ -604,7 +607,7 @@ export function mountOverlap(root, host) {
         var o = x.o, sug;
         if (o.l) sug = '<span class="status">Swamp or a black/green land, once the deck has no other ' + esc(o.c.split("").map(function (c) { return CN[c]; }).join(" or ")) + " cards</span>";
         else if (o.s && o.s.length) sug = o.s.map(function (z) { return "<div>" + (inPool[z[0]] ? "★ " : "") + esc(z[0]) + ' <span class="status">' + esc(z[1]) + "</span></div>"; }).join("") +
-          '<div class="status">tags: ' + esc((o.t || []).join(", ")) + "</div>";
+          '<div class="status">tags: ' + esc((o.t || []).join(", ")) + (o.auto ? " (from the cached Scryfall data)" : "") + "</div>";
         else sug = '<span class="status">No Scryfall tag match; add your own</span>';
         var chips = x.ds.map(function (i) { return '<span class="dk" style="--dc:var(' + DECKS[i].v + ')"><i></i>' + esc(DECKS[i].n) + "</span>"; }).join("");
         var mine = S.subs && S.subs[x.r.name] || "";
@@ -1151,7 +1154,7 @@ export function mountOverlap(root, host) {
     try { var raw = host.load(); if (raw) { var o = sanitize(JSON.parse(JSON.stringify(raw))); if (o) return o; } } catch (e) { storageOK = false; }
     return null;
   }
-  function effInfo(n) { return S.info[n] || BASE_INFO[n] || null; }
+  function effInfo(n) { return S.info[n] || BASE_INFO[n] || (host.cardInfo ? host.cardInfo(n) : null) || null; }
   function derive() {
     var cards = {};
     S.decks.forEach(function (d, i) {
@@ -1428,5 +1431,5 @@ export function mountOverlap(root, host) {
   initMgr();
   drawPicker();
   start();
-  return { refresh: function () { start(); }, destroy: function () { window.removeEventListener("resize", onResize); if (tip0) tip0.remove(); } };
+  return { refresh: function () { derive(); drawPicker(); start(); fillSel(); renderInfo(); }, destroy: function () { window.removeEventListener("resize", onResize); if (tip0) tip0.remove(); } };
 }
