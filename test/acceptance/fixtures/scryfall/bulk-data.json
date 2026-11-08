@@ -1,0 +1,4 @@
+{"object":"list","has_more":false,"data":[
+ {"object":"bulk_data","type":"default_cards","updated_at":"2026-11-08T10:07:57.464+00:00","jsonl_download_uri":"https://data.scryfall.io/default-cards/default-cards-20261108100757.jsonl.gz","compressed_size":0},
+ {"object":"bulk_data","type":"oracle_tags","updated_at":"2026-11-08T10:00:34.347+00:00","jsonl_download_uri":"https://data.scryfall.io/oracle-tags/oracle-tags-20261108100034.jsonl.gz","compressed_size":0}
+]}
